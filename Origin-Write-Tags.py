@@ -1,8 +1,8 @@
 # Origin Write Tags
 # author: hypermodified
 # This python script loops through a directory opens the associated origin file, gets the meta data from that and writes it to the vorbis tags in the flac files in the directory
-# This script writes to Album Artist, Album, Year, Label, Catalog Number for all albums. 
-# It will write to Artist as well if you specify that the albums are not Various Artists, DJ or Classical albums. 
+# This script writes to Album Artist, Album, Year, Label, Catalog Number for all albums.
+# It will write to Artist as well if you specify that the albums are not Various Artists, DJ or Classical albums.
 # This has only been tested to work with flac files.
 # It can handle albums with artwork folders or multiple disc folders in them. It can also handle specials characters.
 # It has been tested and works in both Ubuntu Linux and Windows 10.
@@ -110,6 +110,7 @@ def summary_text():
     else:
         print("There were no errors.")
 
+
 # A function to check whether the directory is a an album or a sub-directory and returns an origin file location and album name
 def level_check(directory):
     global total_count
@@ -129,7 +130,7 @@ def level_check(directory):
     # Checks to see if a folder is an album or subdirectory by looking at how many segments are in a path and returns origin location and album name
     if album_location_check == directory_location and album_depth == 1:
         print("--This is an album.")
-        origin_location = os.path.join(directory,"origin.yaml")
+        origin_location = os.path.join(directory, "origin.yaml")
         album_name = path_segments[-1]
         print(f"--Origin Location: {origin_location}")
         print(f"--Album Name: {album_name}")
@@ -137,23 +138,23 @@ def level_check(directory):
         return True, origin_location, album_name
     elif album_location_check == directory_location and album_depth == 2:
         print("--This is an album.")
-        origin_location = os.path.join(directory,"origin.yaml")
-        album_name = os.path.join(path_segments[-2],path_segments[-1])
+        origin_location = os.path.join(directory, "origin.yaml")
+        album_name = os.path.join(path_segments[-2], path_segments[-1])
         print(f"--Origin Location: {origin_location}")
         print(f"--Album Name: {album_name}")
         total_count += 1  # variable will increment every loop iteration
-        return True, origin_location, album_name        
+        return True, origin_location, album_name
     elif album_location_check < directory_location and album_depth == 1:
         print("--This is a sub-directory")
-        origin_location = os.path.join(album_directory, path_segments[-2],"origin.yaml")
-        album_name = os.path.join(path_segments[-2],path_segments[-1])
+        origin_location = os.path.join(album_directory, path_segments[-2], "origin.yaml")
+        album_name = os.path.join(path_segments[-2], path_segments[-1])
         print(f"--Origin Location: {origin_location}")
         print(f"--Album Name: {album_name}")
         return False, origin_location, album_name
     elif album_location_check < directory_location and album_depth == 2:
         print("--This is a sub-directory")
-        origin_location = os.path.join(album_directory, path_segments[-3], path_segments[-2],"origin.yaml")
-        album_name = os.path.join(path_segments[-3],path_segments[-2],path_segments[-1])
+        origin_location = os.path.join(album_directory, path_segments[-3], path_segments[-2], "origin.yaml")
+        album_name = os.path.join(path_segments[-3], path_segments[-2], path_segments[-1])
         print(f"--Origin Location: {origin_location}")
         print(f"--Album Name: {album_name}")
         return False, origin_location, album_name
@@ -166,6 +167,7 @@ def level_check(directory):
         return False, origin_location, album_name
 
 
+# Rethink this so it checks all files and if any end in flac go forth
 # A function to check whether a directory has flac and should be checked further
 def flac_check(directory):
 
@@ -177,62 +179,6 @@ def flac_check(directory):
         else:
             print("--There are no flac in this directory.")
             return False
-
-
-# A function to check the tags of each file and sort it if critical tags are missing
-def tag_check(directory, is_album):
-    global bad_tag_directory
-    global album_location
-    global album_directory
-    global tags_missing
-    global album_depth
-
-    # Get the album name
-    segments = directory.split(os.sep)
-    album_location_index = album_location - 1
-    album_name = str(segments[album_location_index])
-
-    # If the album depth is 2, get the artist name
-    if album_depth == 2:
-        artist_location_index = album_location - 2
-        artist_name = str(segments[artist_location_index])
-
-    # Handle directories vs sub-directories by defining start path taking into account is_album depth
-    if is_album == True:
-        start_path = directory
-    elif album_depth == 1:
-        # build the path by joining the album directory path with the album name
-        start_path = os.path.join(album_directory, album_name)
-    elif album_depth == 2:
-        # build the path by joining the album directory path with the artist and album name
-        start_path = os.path.join(album_directory, artist_name, album_name)
-
-    # loop through directory and look for missing tags
-    for fname in os.listdir(directory):
-        if fname.endswith(".flac"):
-            meta_data = mutagen.File(fname)
-            if "tracknumber" not in meta_data or "artist" not in meta_data or "title" not in meta_data or "album" not in meta_data:
-                print("--Failure: Metadata Missing")
-                print("--This should be moved to the Missing Tags folder.")
-                if album_depth == 1:
-                    target = os.path.join(bad_tag_directory, album_name)
-                elif album_depth == 2:
-                    target = os.path.join(bad_tag_directory, artist_name, album_name)
-                print(f"--The starting path is: {start_path}")
-                print(f"--The target is: {target}")
-                # make the pair a tupple
-                move_pair = (start_path, target)
-                # adds the tupple to the list
-                move_set.add(move_pair)
-                # log the album is  missing tags
-                print("--Logged missing tags.")
-                log_name = "tags_missing"
-                log_message = f"has tracks that are missing either track number, title, artist or album tags.\nIt has been moved to: {target}"
-                log_outcomes(directory, log_name, log_message)
-                tags_missing += 1  # variable will increment every loop iteration
-                return False
-
-    return True
 
 
 # A function to check if the origin file is there and to determine whether it is supposed to be there.
@@ -287,7 +233,7 @@ def get_metadata(directory, is_album, origin_location, album_name):
     if location_exists == True:
         print("Origin File Location is valid")
 
-    if file_exists == True:
+    if location_exists == True:
         # open the yaml
         try:
             with open(origin_location, encoding="utf-8") as f:
@@ -305,7 +251,7 @@ def get_metadata(directory, is_album, origin_location, album_name):
             print("--You are using the correct version of gazelle-origin.")
 
             # turn the data into variables
-            meta_data = {
+            origin_metadata = {
                 "artist_name": data["Artist"],
                 "album_name": data["Name"],
                 "edition_label": data["Record label"],
@@ -317,7 +263,7 @@ def get_metadata(directory, is_album, origin_location, album_name):
                 "original_year": data["Original year"],
             }
             f.close()
-            return metadata
+            return origin_metadata
         else:
             print("--You need to update your origin files with more metadata.")
             print("--Switch to the gazelle-origin fork here: https://github.com/spinfast319/gazelle-origin")
@@ -329,9 +275,41 @@ def get_metadata(directory, is_album, origin_location, album_name):
             log_outcomes(directory, log_name, log_message)
             origin_old += 1  # variable will increment every loop iteration'''
 
+
+def write_tags(directory, origin_metadata, album_name):
+    global count
+    global various_artists
+
+    print("--Retagging files.")
+    # Clear the list so the log captures just this albums tracks
+    rename_list = []
+
+    if origin_metadata != None:
+        # Loop through the directory and rename flac files
+        for fname in os.listdir(directory):
+            if fname.endswith(".flac"):
+                tag_metadata = mutagen.File(fname)
+                print(f"--Track Name: {fname}")
+                # log track that was retagged
+                rename_list.append(f"--Track Name: {fname}")
+                if origin_metadata["artist_name"] != None:
+                    tag_metadata["album artist"] = origin_metadata["artist_name"]
+                if origin_metadata["artist_name"] != None and various_artists == 1:
+                    tag_metadata["artist"] = origin_metadata["artist_name"]
+                if origin_metadata["album_name"] != None:
+                    tag_metadata["album"] = origin_metadata["album_name"]
+                if origin_metadata["edition_label"] != None:
+                    tag_metadata["organization"] = origin_metadata["edition_label"]
+                if origin_metadata["edition_cat"] != None:
+                    tag_metadata["labelno"] = origin_metadata["edition_cat"]
+                if origin_metadata["original_year"] != None:
+                    tag_metadata["date"] = str(origin_metadata["original_year"])
+                tag_metadata.save()
+                count += 1  # variable will increment every loop iteration
+
+
 # The main function that controls the flow of the script
 def main():
-    global album_location
 
     try:
         # intro text
@@ -352,9 +330,8 @@ def main():
             is_flac = flac_check(i)
             # check for meta data and sort
             if is_flac == True:
-                metadata = get_metadata(i,is_album,origin_location,album_name)
-                #write_tags(i,metadata,album_name)
-                #tag_check(i, is_album)
+                origin_metadata = get_metadata(i, is_album, origin_location, album_name)
+                write_tags(i, origin_metadata, album_name)
 
     finally:
         # Summary text
