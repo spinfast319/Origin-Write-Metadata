@@ -91,7 +91,7 @@ def summary_text():
     global origin_old
 
     print("")
-    print(f"This script wrote tags to {count} albums out of {total_count} albums examined.")
+    print(f"This script wrote tags to {count} tracks from {total_count} albums.")
     print("This script looks for potential missing files or errors. The following messages outline whether any were found.")
 
     error_status = error_exists(tags_missing)
@@ -119,7 +119,6 @@ def level_check(directory):
 
     print("")
     print(f"Directory: {directory}")
-    print("Folder Depth:")
     print(f"--The albums are stored {album_location_check} folders deep.")
 
     path_segments = directory.split(os.sep)
@@ -132,38 +131,28 @@ def level_check(directory):
         print("--This is an album.")
         origin_location = os.path.join(directory, "origin.yaml")
         album_name = path_segments[-1]
-        print(f"--Origin Location: {origin_location}")
-        print(f"--Album Name: {album_name}")
         total_count += 1  # variable will increment every loop iteration
         return True, origin_location, album_name
     elif album_location_check == directory_location and album_depth == 2:
         print("--This is an album.")
         origin_location = os.path.join(directory, "origin.yaml")
         album_name = os.path.join(path_segments[-2], path_segments[-1])
-        print(f"--Origin Location: {origin_location}")
-        print(f"--Album Name: {album_name}")
         total_count += 1  # variable will increment every loop iteration
         return True, origin_location, album_name
     elif album_location_check < directory_location and album_depth == 1:
         print("--This is a sub-directory")
         origin_location = os.path.join(album_directory, path_segments[-2], "origin.yaml")
         album_name = os.path.join(path_segments[-2], path_segments[-1])
-        print(f"--Origin Location: {origin_location}")
-        print(f"--Album Name: {album_name}")
         return False, origin_location, album_name
     elif album_location_check < directory_location and album_depth == 2:
         print("--This is a sub-directory")
         origin_location = os.path.join(album_directory, path_segments[-3], path_segments[-2], "origin.yaml")
         album_name = os.path.join(path_segments[-3], path_segments[-2], path_segments[-1])
-        print(f"--Origin Location: {origin_location}")
-        print(f"--Album Name: {album_name}")
         return False, origin_location, album_name
     elif album_location_check > directory_location and album_depth == 2:
         print("--This is an artist folder.")
         origin_location = None
         album_name = None
-        print(f"--Origin Location: {origin_location}")
-        print(f"--Album Name: {album_name}")
         return False, origin_location, album_name
 
 
@@ -176,9 +165,9 @@ def flac_check(directory):
         if fname.endswith(".flac"):
             print("--There are flac in this directory.")
             return True
-        else:
-            print("--There are no flac in this directory.")
-            return False
+
+    print("--There are no flac in this directory.")
+    return False
 
 
 # A function to check if the origin file is there and to determine whether it is supposed to be there.
@@ -224,14 +213,14 @@ def get_metadata(directory, is_album, origin_location, album_name):
     global origin_old
 
     print(f"Getting metadata for {album_name}")
-    print(f"From: {origin_location}")
+    print(f"--From: {origin_location}")
 
     # check to see if there is an origin file
     file_exists = check_file(directory)
     # check to see the origin file location variable exists
     location_exists = os.path.exists(origin_location)
     if location_exists == True:
-        print("Origin File Location is valid")
+        print("--The origin file location is valid.")
 
     if location_exists == True:
         # open the yaml
@@ -280,7 +269,7 @@ def write_tags(directory, origin_metadata, album_name):
     global count
     global various_artists
 
-    print("--Retagging files.")
+    print("Retagging files.")
     # Clear the list so the log captures just this albums tracks
     rename_list = []
 
