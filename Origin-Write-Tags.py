@@ -18,7 +18,7 @@ import datetime  # Imports functionality that lets you make timestamps
 import mutagen  # Imports functionality to get metadata from music files
 
 #  Set your directories here
-album_directory = "M:\Python Test Environment\Albums"  # Which directory do you want to start with?
+album_directory = "M:\Python Test Environment\Albums2"  # Which directory do you want to start with?
 log_directory = "M:\Python Test Environment\Logs"  # Which directory do you want the log in?
 
 # Set whether you are using nested folders or have all albums in one directory here
@@ -28,9 +28,9 @@ log_directory = "M:\Python Test Environment\Logs"  # Which directory do you want
 album_depth = 1
 
 # Set whether you are retagging albums that are various artist, dj or classical, this will determine whether the Artist tag is replaced as well
-# If this batch of albums various artist, dj or classical albums set this value to 1
+# If this batch of albums includes only various artist, dj or classical albums set this value to 1
 # If this batch of albums does not include various artist, dj or classical albums set this value to 2
-# BE CAREFULL you could accidtentally overwrite metadata that will be hard to get back if you have it set to 2
+# BE CAREFULL you could accidentally overwrite metadata that will be hard to get back if you have it set to 2
 # The default is 1
 various_artists = 1
 
@@ -47,7 +47,7 @@ origin_old = 0
 # identifies album directory level
 path_segments = album_directory.split(os.sep)
 segments = len(path_segments)
-album_location = segments + album_depth
+album_location_check = segments + album_depth
 
 
 # A function to log events
@@ -110,33 +110,60 @@ def summary_text():
     else:
         print("There were no errors.")
 
-# Might not need this
-# A function to check whether the directory is a an album or a sub-directory
+# A function to check whether the directory is a an album or a sub-directory and returns an origin file location and album name
 def level_check(directory):
     global total_count
-    global album_location
+    global album_location_check
+    global album_directory
 
     print("")
-    print(directory)
+    print(f"Directory: {directory}")
     print("Folder Depth:")
-    print(f"--The albums are stored {album_location} folders deep.")
+    print(f"--The albums are stored {album_location_check} folders deep.")
 
     path_segments = directory.split(os.sep)
     directory_location = len(path_segments)
 
     print(f"--This folder is {directory_location} folders deep.")
 
-    # Checks to see if a folder is an album or subdirectory by looking at how many segments are in a path
-    if album_location == directory_location:
+    # Checks to see if a folder is an album or subdirectory by looking at how many segments are in a path and returns origin location and album name
+    if album_location_check == directory_location and album_depth == 1:
         print("--This is an album.")
+        origin_location = os.path.join(directory,"origin.yaml")
+        album_name = path_segments[-1]
+        print(f"--Origin Location: {origin_location}")
+        print(f"--Album Name: {album_name}")
         total_count += 1  # variable will increment every loop iteration
-        return True
-    elif album_location < directory_location:
+        return True, origin_location, album_name
+    elif album_location_check == directory_location and album_depth == 2:
+        print("--This is an album.")
+        origin_location = os.path.join(directory,"origin.yaml")
+        album_name = os.path.join(path_segments[-2],path_segments[-1])
+        print(f"--Origin Location: {origin_location}")
+        print(f"--Album Name: {album_name}")
+        total_count += 1  # variable will increment every loop iteration
+        return True, origin_location, album_name        
+    elif album_location_check < directory_location and album_depth == 1:
         print("--This is a sub-directory")
-        return False
-    elif album_location > directory_location and album_depth == 2:
+        origin_location = os.path.join(album_directory, path_segments[-2],"origin.yaml")
+        album_name = os.path.join(path_segments[-2],path_segments[-1])
+        print(f"--Origin Location: {origin_location}")
+        print(f"--Album Name: {album_name}")
+        return False, origin_location, album_name
+    elif album_location_check < directory_location and album_depth == 2:
+        print("--This is a sub-directory")
+        origin_location = os.path.join(album_directory, path_segments[-3], path_segments[-2],"origin.yaml")
+        album_name = os.path.join(path_segments[-3],path_segments[-2],path_segments[-1])
+        print(f"--Origin Location: {origin_location}")
+        print(f"--Album Name: {album_name}")
+        return False, origin_location, album_name
+    elif album_location_check > directory_location and album_depth == 2:
         print("--This is an artist folder.")
-        return False
+        origin_location = None
+        album_name = None
+        print(f"--Origin Location: {origin_location}")
+        print(f"--Album Name: {album_name}")
+        return False, origin_location, album_name
 
 
 # A function to check whether a directory has flac and should be checked further
@@ -208,6 +235,100 @@ def tag_check(directory, is_album):
     return True
 
 
+# A function to check if the origin file is there and to determine whether it is supposed to be there.
+def check_file(directory):
+    global good_missing
+    global bad_missing
+    global album_location_check
+
+    # check to see if there is an origin file
+    file_exists = os.path.exists("origin.yaml")
+    # if origin file exists, load it, copy, and rename
+    if file_exists == True:
+        return True
+    else:
+        # split the directory to make sure that it distinguishes between foldrs that should and shouldn't have origin files
+        current_path_segments = directory.split(os.sep)
+        current_segments = len(current_path_segments)
+        # create different log files depending on whether the origin file is missing somewhere it shouldn't be
+        if album_location_check != current_segments:
+            # log the missing origin file folders that are likely supposed to be missing
+            print("--An origin file is missing from a folder that should not have one.")
+            print("--Logged missing origin file.")
+            log_name = "good-missing-origin"
+            log_message = "origin file is missing from a folder that should not have one.\nSince it shouldn't be there it is probably fine but you can double check"
+            log_outcomes(directory, log_name, log_message)
+            good_missing += 1  # variable will increment every loop iteration
+            return False
+        else:
+            # log the missing origin file folders that are not likely supposed to be missing
+            print("--An origin file is missing from a folder that should have one.")
+            print("--Logged missing origin file.")
+            log_name = "bad-missing-origin"
+            log_message = "origin file is missing from a folder that should have one"
+            log_outcomes(directory, log_name, log_message)
+            bad_missing += 1  # variable will increment every loop iteration
+            return False
+
+
+#  A function that gets the directory and then opens the origin file and extracts the needed variables
+def get_metadata(directory, is_album, origin_location, album_name):
+    global count
+    global parse_error
+    global origin_old
+
+    print(f"Getting metadata for {album_name}")
+    print(f"From: {origin_location}")
+
+    # check to see if there is an origin file
+    file_exists = check_file(directory)
+    # check to see the origin file location variable exists
+    location_exists = os.path.exists(origin_location)
+    if location_exists == True:
+        print("Origin File Location is valid")
+
+    if file_exists == True:
+        # open the yaml
+        try:
+            with open(origin_location, encoding="utf-8") as f:
+                data = yaml.load(f, Loader=yaml.FullLoader)
+        except:
+            print("--There was an issue parsing the yaml file and the cover could not be downloaded.")
+            print("--Logged missing cover due to parse error. Redownload origin file.")
+            log_name = "parse-error"
+            log_message = "had an error parsing the yaml and the cover art could not be downloaded. Redownload the origin file"
+            log_outcomes(directory, log_name, log_message)
+            parse_error += 1  # variable will increment every loop iteration
+            return
+        # check to see if the origin file has the corect metadata
+        if "Cover" in data.keys():
+            print("--You are using the correct version of gazelle-origin.")
+
+            # turn the data into variables
+            meta_data = {
+                "artist_name": data["Artist"],
+                "album_name": data["Name"],
+                "edition_label": data["Record label"],
+                "edition_cat": data["Catalog number"],
+                "edition_year": data["Edition year"],
+                "djs": data["DJs"],
+                "composers": data["Composers"],
+                "conductors": data["Conductors"],
+                "original_year": data["Original year"],
+            }
+            f.close()
+            return metadata
+        else:
+            print("--You need to update your origin files with more metadata.")
+            print("--Switch to the gazelle-origin fork here: https://github.com/spinfast319/gazelle-origin")
+            print("--Then run: https://github.com/spinfast319/Update-Gazelle-Origin-Files")
+            print("--Then try this script again.")
+            print("--Logged out of date origin file.")
+            log_name = "out-of-date-origin"
+            log_message = "origin file out of date"
+            log_outcomes(directory, log_name, log_message)
+            origin_old += 1  # variable will increment every loop iteration'''
+
 # The main function that controls the flow of the script
 def main():
     global album_location
@@ -215,7 +336,7 @@ def main():
     try:
         # intro text
         print("")
-        print("I will shred this universe down to its last atom and then, with the stones you've collected for me, create a new one.")
+        print("I will shred this universe down to its last atom and then, with the stones you've collected for me, create a new one...")
         print("")
 
         # Get all the subdirectories of album_directory recursively and store them in a list:
@@ -226,17 +347,19 @@ def main():
         for i in directories:
             os.chdir(i)  # Change working Directory
             # establish directory level
-            is_album = level_check(i)
+            is_album, origin_location, album_name = level_check(i)
             # check for flac
             is_flac = flac_check(i)
             # check for meta data and sort
             if is_flac == True:
-                tag_check(i, is_album)
+                metadata = get_metadata(i,is_album,origin_location,album_name)
+                #write_tags(i,metadata,album_name)
+                #tag_check(i, is_album)
 
     finally:
         # Summary text
         print("")
-        print("It is not what is lost but only what it is been given... a grateful universal.")
+        print("...It is not what is lost but only what it is been given... a grateful universal.")
         # run summary text function to provide error messages
         summary_text()
         print("")
