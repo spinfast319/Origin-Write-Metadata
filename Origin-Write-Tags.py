@@ -53,7 +53,7 @@ album_location_check = segments + album_depth
 def log_outcomes(directory, log_name, message, log_list):
     global log_directory
 
-    script_name = "Origin Write Tags"
+    script_name = "Origin Write Tags Script"
     today = datetime.datetime.now()
     log_name = f"{log_name}.txt"
     album_name = directory.split(os.sep)
@@ -64,7 +64,8 @@ def log_outcomes(directory, log_name, message, log_list):
         log_name.write(f"The album folder {album_name} {message}.\n")
         if log_list != None:
             log_name.write("\n".join(map(str, log_list)))
-        log_name.write(f"\nAlbum location: {directory}\n")
+            log_name.write("\n")
+        log_name.write(f"Album location: {directory}\n")
         log_name.write(" \n")
         log_name.close()
 
@@ -115,8 +116,7 @@ def level_check(directory):
     global album_location_check
     global album_directory
 
-    print("")
-    print(f"Directory: {directory}")
+    print(f"--Directory: {directory}")
     print(f"--The albums are stored {album_location_check} folders deep.")
 
     path_segments = directory.split(os.sep)
@@ -130,28 +130,28 @@ def level_check(directory):
         origin_location = os.path.join(directory, "origin.yaml")
         album_name = path_segments[-1]
         total_count += 1  # variable will increment every loop iteration
-        return True, origin_location, album_name
+        return origin_location, album_name
     elif album_location_check == directory_location and album_depth == 2:
         print("--This is an album.")
         origin_location = os.path.join(directory, "origin.yaml")
         album_name = os.path.join(path_segments[-2], path_segments[-1])
         total_count += 1  # variable will increment every loop iteration
-        return True, origin_location, album_name
+        return origin_location, album_name
     elif album_location_check < directory_location and album_depth == 1:
         print("--This is a sub-directory")
         origin_location = os.path.join(album_directory, path_segments[-2], "origin.yaml")
         album_name = os.path.join(path_segments[-2], path_segments[-1])
-        return False, origin_location, album_name
+        return origin_location, album_name
     elif album_location_check < directory_location and album_depth == 2:
         print("--This is a sub-directory")
         origin_location = os.path.join(album_directory, path_segments[-3], path_segments[-2], "origin.yaml")
         album_name = os.path.join(path_segments[-3], path_segments[-2], path_segments[-1])
-        return False, origin_location, album_name
+        return origin_location, album_name
     elif album_location_check > directory_location and album_depth == 2:
         print("--This is an artist folder.")
         origin_location = None
         album_name = None
-        return False, origin_location, album_name
+        return origin_location, album_name
 
 
 # Rethink this so it checks all files and if any end in flac go forth
@@ -207,22 +207,21 @@ def check_file(directory):
 
 
 #  A function that gets the directory and then opens the origin file and extracts the needed variables
-def get_metadata(directory, is_album, origin_location, album_name):
+def get_metadata(directory, origin_location, album_name):
     global count
     global parse_error
     global origin_old
 
-    print(f"Getting metadata for {album_name}")
+    print(f"--Getting metadata for {album_name}")
     print(f"--From: {origin_location}")
 
-    # check to see if there is an origin file
+    # check to see if there is an origin file in this specific directory
     file_exists = check_file(directory)
     # check to see the origin file location variable exists
     location_exists = os.path.exists(origin_location)
+        
     if location_exists == True:
         print("--The origin file location is valid.")
-
-    if location_exists == True:
         # open the yaml
         try:
             with open(origin_location, encoding="utf-8") as f:
@@ -267,13 +266,21 @@ def get_metadata(directory, is_album, origin_location, album_name):
             log_list = None
             log_outcomes(directory, log_name, log_message, log_list)
             origin_old += 1  # variable will increment every loop iteration'''
-
+    else:
+        # log the missing origin file folders that are not likely supposed to be missing
+        print("--An origin file is missing from a folder that should have one.")
+        print("--Logged missing origin file.")
+        log_name = "bad-missing-origin"
+        log_message = "origin file is missing from a folder that should have one"
+        log_list = None
+        log_outcomes(directory, log_name, log_message, log_list)
+        bad_missing += 1  # variable will increment every loop iteration
 
 def write_tags(directory, origin_metadata, album_name):
     global count
     global various_artists
 
-    print("Retagging files.")
+    print("--Retagging files.")
     # Clear the list so the log captures just this albums tracks
     retag_list = []
 
@@ -310,6 +317,8 @@ def write_tags(directory, origin_metadata, album_name):
                     tag_metadata["DATE"] = str(origin_metadata["original_year"])                
                 tag_metadata.save()
                 count += 1  # variable will increment every loop iteration
+    else:
+        print(f"Origin metadata unexpectedly missing.")
 
     # figure out how many tracks were renamed
     tracks_retagged = len(retag_list)
@@ -340,14 +349,19 @@ def main():
         #  Run a loop that goes into each directory identified in the list and runs the function that sorts the folders
         for i in directories:
             os.chdir(i)  # Change working Directory
+            print("")
+            print("Retagging starting.")
             # establish directory level
-            is_album, origin_location, album_name = level_check(i)
+            origin_location, album_name = level_check(i)
             # check for flac
             is_flac = flac_check(i)
             # check for meta data and sort
             if is_flac == True:
-                origin_metadata = get_metadata(i, is_album, origin_location, album_name)
+                origin_metadata = get_metadata(i, origin_location, album_name)
                 write_tags(i, origin_metadata, album_name)
+                print("Retagging complete.")    
+            else:
+                print("No retagging.")
 
     finally:
         # Summary text
