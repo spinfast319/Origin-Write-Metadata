@@ -38,7 +38,6 @@ various_artists = 1
 count = 0
 total_count = 0
 error_message = 0
-tags_missing = 0
 good_missing = 0
 bad_missing = 0
 parse_error = 0
@@ -51,7 +50,7 @@ album_location_check = segments + album_depth
 
 
 # A function to log events
-def log_outcomes(directory, log_name, message):
+def log_outcomes(directory, log_name, message, log_list):
     global log_directory
 
     script_name = "Origin Write Tags"
@@ -63,7 +62,9 @@ def log_outcomes(directory, log_name, message):
     with open(log_path, "a", encoding="utf-8") as log_name:
         log_name.write(f"--{today:%b, %d %Y} at {today:%H:%M:%S} from the {script_name}.\n")
         log_name.write(f"The album folder {album_name} {message}.\n")
-        log_name.write(f"Album location: {directory}\n")
+        if log_list != None:
+            log_name.write("\n".join(map(str, log_list)))
+        log_name.write(f"\nAlbum location: {directory}\n")
         log_name.write(" \n")
         log_name.close()
 
@@ -84,7 +85,6 @@ def summary_text():
     global count
     global total_count
     global error_message
-    global tags_missing
     global parse_error
     global bad_missing
     global good_missing
@@ -94,8 +94,6 @@ def summary_text():
     print(f"This script wrote tags to {count} tracks from {total_count} albums.")
     print("This script looks for potential missing files or errors. The following messages outline whether any were found.")
 
-    error_status = error_exists(tags_missing)
-    print(f"--{error_status}: There were {tags_missing} albums missing from the origin file so they were not able to be written to the file.")
     error_status = error_exists(parse_error)
     print(f"--{error_status}: There were {parse_error} albums skipped due to not being able to open the yaml. Redownload the yaml file.")
     error_status = error_exists(origin_old)
@@ -192,7 +190,8 @@ def check_file(directory):
             print("--Logged missing origin file.")
             log_name = "good-missing-origin"
             log_message = "origin file is missing from a folder that should not have one.\nSince it shouldn't be there it is probably fine but you can double check"
-            log_outcomes(directory, log_name, log_message)
+            log_list = None
+            log_outcomes(directory, log_name, log_message, log_list)
             good_missing += 1  # variable will increment every loop iteration
             return False
         else:
@@ -201,7 +200,8 @@ def check_file(directory):
             print("--Logged missing origin file.")
             log_name = "bad-missing-origin"
             log_message = "origin file is missing from a folder that should have one"
-            log_outcomes(directory, log_name, log_message)
+            log_list = None
+            log_outcomes(directory, log_name, log_message, log_list)
             bad_missing += 1  # variable will increment every loop iteration
             return False
 
@@ -232,7 +232,8 @@ def get_metadata(directory, is_album, origin_location, album_name):
             print("--Logged missing cover due to parse error. Redownload origin file.")
             log_name = "parse-error"
             log_message = "had an error parsing the yaml and the cover art could not be downloaded. Redownload the origin file"
-            log_outcomes(directory, log_name, log_message)
+            log_list = None
+            log_outcomes(directory, log_name, log_message, log_list)
             parse_error += 1  # variable will increment every loop iteration
             return
         # check to see if the origin file has the corect metadata
@@ -243,6 +244,7 @@ def get_metadata(directory, is_album, origin_location, album_name):
             origin_metadata = {
                 "artist_name": data["Artist"],
                 "album_name": data["Name"],
+                "release_type": data["Release type"],
                 "edition_label": data["Record label"],
                 "edition_cat": data["Catalog number"],
                 "edition_year": data["Edition year"],
@@ -250,6 +252,7 @@ def get_metadata(directory, is_album, origin_location, album_name):
                 "composers": data["Composers"],
                 "conductors": data["Conductors"],
                 "original_year": data["Original year"],
+                "media": data["Media"],
             }
             f.close()
             return origin_metadata
@@ -261,7 +264,8 @@ def get_metadata(directory, is_album, origin_location, album_name):
             print("--Logged out of date origin file.")
             log_name = "out-of-date-origin"
             log_message = "origin file out of date"
-            log_outcomes(directory, log_name, log_message)
+            log_list = None
+            log_outcomes(directory, log_name, log_message, log_list)
             origin_old += 1  # variable will increment every loop iteration'''
 
 
@@ -271,7 +275,7 @@ def write_tags(directory, origin_metadata, album_name):
 
     print("Retagging files.")
     # Clear the list so the log captures just this albums tracks
-    rename_list = []
+    retag_list = []
 
     if origin_metadata != None:
         # Loop through the directory and rename flac files
@@ -280,21 +284,44 @@ def write_tags(directory, origin_metadata, album_name):
                 tag_metadata = mutagen.File(fname)
                 print(f"--Track Name: {fname}")
                 # log track that was retagged
-                rename_list.append(f"--Track Name: {fname}")
+                retag_list.append(f"--Track Name: {fname}")
+                #  retag the metadata
                 if origin_metadata["artist_name"] != None:
-                    tag_metadata["album artist"] = origin_metadata["artist_name"]
+                    tag_metadata["ALBUM ARTIST"] = origin_metadata["artist_name"]
                 if origin_metadata["artist_name"] != None and various_artists == 1:
-                    tag_metadata["artist"] = origin_metadata["artist_name"]
+                    tag_metadata["ARTIST"] = origin_metadata["artist_name"]
                 if origin_metadata["album_name"] != None:
-                    tag_metadata["album"] = origin_metadata["album_name"]
+                    tag_metadata["ALBUM"] = origin_metadata["album_name"]
+                if origin_metadata["release_type"] != None:
+                    tag_metadata["GROUPING"] = origin_metadata["release_type"]
                 if origin_metadata["edition_label"] != None:
-                    tag_metadata["organization"] = origin_metadata["edition_label"]
+                    tag_metadata["ORGANIZATION"] = origin_metadata["edition_label"]
                 if origin_metadata["edition_cat"] != None:
-                    tag_metadata["labelno"] = origin_metadata["edition_cat"]
+                    tag_metadata["LABELNO"] = origin_metadata["edition_cat"]
+                    tag_metadata["CATALOGNUMBER"] = origin_metadata["edition_cat"]
+                if origin_metadata["media"] != None:
+                    tag_metadata["MEDIA"] = str(origin_metadata["media"])
                 if origin_metadata["original_year"] != None:
-                    tag_metadata["date"] = str(origin_metadata["original_year"])
+                    tag_metadata["ORIGINALDATE"] = str(origin_metadata["original_year"]) 
+                    tag_metadata["YEAR"] = str(origin_metadata["original_year"]) 
+                if origin_metadata["edition_year"] != None:
+                    tag_metadata["DATE"] = str(origin_metadata["edition_year"])     
+                elif origin_metadata["edition_year"] == None and origin_metadata["original_year"] != None:    
+                    tag_metadata["DATE"] = str(origin_metadata["original_year"])                
                 tag_metadata.save()
                 count += 1  # variable will increment every loop iteration
+
+    # figure out how many tracks were renamed
+    tracks_retagged = len(retag_list)
+    if tracks_retagged != 0:
+        print(f"--Tracks Retagged: {tracks_retagged}")
+    else:
+        print(f"--There were no flac in this folder.")
+    # log the album the name change
+    log_name = "files_retagged"
+    log_message = f"had {tracks_retagged} files retagged"
+    log_list = retag_list
+    log_outcomes(directory, log_name, log_message, log_list)
 
 
 # The main function that controls the flow of the script
