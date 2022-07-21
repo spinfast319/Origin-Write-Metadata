@@ -18,7 +18,7 @@ import datetime  # Imports functionality that lets you make timestamps
 import mutagen  # Imports functionality to get metadata from music files
 
 #  Set your directories here
-album_directory = "M:\Python Test Environment\Albums2"  # Which directory do you want to start with?
+album_directory = "M:\Python Test Environment\Albums4"  # Which directory do you want to start with?
 log_directory = "M:\Python Test Environment\Logs"  # Which directory do you want the log in?
 
 # Set whether you are using nested folders or have all albums in one directory here
@@ -27,12 +27,16 @@ log_directory = "M:\Python Test Environment\Logs"  # Which directory do you want
 # The default is 1
 album_depth = 1
 
-# Set whether you are retagging albums that are various artist, dj or classical, this will determine whether the Artist tag is replaced as well
-# If this batch of albums includes only various artist, dj or classical albums set this value to 1
-# If this batch of albums does not include various artist, dj or classical albums set this value to 2
-# BE CAREFULL you could accidentally overwrite metadata that will be hard to get back if you have it set to 2
+# Set whether you are retagging albums that are various artist, dj, or normal
+# Setting this to 1 will only set the Album Artist to the artist name which will be Various Artists
+# Setting this to 2 will set the Album Artist tag to the DJ name
+# Setting this to 3 will set both Album Artist and Artist tag to the artists name
+# 1 = VA
+# 2 = DJ
+# 3 = Normal
+# BE CAREFULL you could accidentally overwrite metadata that will be hard to get back if you have it set to 3
 # The default is 1
-various_artists = 1
+album_type = 2
 
 # Establishes the counters for completed albums and missing origin files
 count = 0
@@ -219,7 +223,7 @@ def get_metadata(directory, origin_location, album_name):
     file_exists = check_file(directory)
     # check to see the origin file location variable exists
     location_exists = os.path.exists(origin_location)
-        
+
     if location_exists == True:
         print("--The origin file location is valid.")
         # open the yaml
@@ -276,9 +280,10 @@ def get_metadata(directory, origin_location, album_name):
         log_outcomes(directory, log_name, log_message, log_list)
         bad_missing += 1  # variable will increment every loop iteration
 
+
 def write_tags(directory, origin_metadata, album_name):
     global count
-    global various_artists
+    global album_type
 
     print("--Retagging files.")
     # Clear the list so the log captures just this albums tracks
@@ -293,9 +298,12 @@ def write_tags(directory, origin_metadata, album_name):
                 # log track that was retagged
                 retag_list.append(f"--Track Name: {fname}")
                 #  retag the metadata
-                if origin_metadata["artist_name"] != None:
+                if origin_metadata["artist_name"] != None and album_type == 1:
                     tag_metadata["ALBUM ARTIST"] = origin_metadata["artist_name"]
-                if origin_metadata["artist_name"] != None and various_artists == 1:
+                if origin_metadata["djs"] != None and album_type == 2:
+                    tag_metadata["ALBUM ARTIST"] = origin_metadata["djs"]
+                if origin_metadata["artist_name"] != None and album_type == 3:
+                    tag_metadata["ALBUM ARTIST"] = origin_metadata["artist_name"]
                     tag_metadata["ARTIST"] = origin_metadata["artist_name"]
                 if origin_metadata["album_name"] != None:
                     tag_metadata["ALBUM"] = origin_metadata["album_name"]
@@ -309,12 +317,12 @@ def write_tags(directory, origin_metadata, album_name):
                 if origin_metadata["media"] != None:
                     tag_metadata["MEDIA"] = str(origin_metadata["media"])
                 if origin_metadata["original_year"] != None:
-                    tag_metadata["ORIGINALDATE"] = str(origin_metadata["original_year"]) 
-                    tag_metadata["YEAR"] = str(origin_metadata["original_year"]) 
+                    tag_metadata["ORIGINALDATE"] = str(origin_metadata["original_year"])
+                    tag_metadata["YEAR"] = str(origin_metadata["original_year"])
                 if origin_metadata["edition_year"] != None:
-                    tag_metadata["DATE"] = str(origin_metadata["edition_year"])     
-                elif origin_metadata["edition_year"] == None and origin_metadata["original_year"] != None:    
-                    tag_metadata["DATE"] = str(origin_metadata["original_year"])                
+                    tag_metadata["DATE"] = str(origin_metadata["edition_year"])
+                elif origin_metadata["edition_year"] == None and origin_metadata["original_year"] != None:
+                    tag_metadata["DATE"] = str(origin_metadata["original_year"])
                 tag_metadata.save()
                 count += 1  # variable will increment every loop iteration
     else:
@@ -359,7 +367,7 @@ def main():
             if is_flac == True:
                 origin_metadata = get_metadata(i, origin_location, album_name)
                 write_tags(i, origin_metadata, album_name)
-                print("Retagging complete.")    
+                print("Retagging complete.")
             else:
                 print("No retagging.")
 
