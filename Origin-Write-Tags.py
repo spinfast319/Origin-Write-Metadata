@@ -184,7 +184,7 @@ def check_file(directory):
     if file_exists == True:
         return True
     else:
-        # split the directory to make sure that it distinguishes between foldrs that should and shouldn't have origin files
+        # split the directory to make sure that it distinguishes between folders that should and shouldn't have origin files
         current_path_segments = directory.split(os.sep)
         current_segments = len(current_path_segments)
         # create different log files depending on whether the origin file is missing somewhere it shouldn't be
