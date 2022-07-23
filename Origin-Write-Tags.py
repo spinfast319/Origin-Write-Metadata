@@ -258,6 +258,7 @@ def get_metadata(directory, origin_location, album_name):
                 "conductors": data["Conductors"],
                 "original_year": data["Original year"],
                 "media": data["Media"],
+                "dl_directory": data["Directory"],
             }
             f.close()
             return origin_metadata
