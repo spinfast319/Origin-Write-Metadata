@@ -220,7 +220,7 @@ def get_metadata(directory, origin_location, album_name):
     print(f"--Getting metadata for {album_name}")
     print(f"--From: {origin_location}")
 
-    # check to see if there is an origin file in this specific directory
+    # check to see if there is an origin file is supposed to be in this specific directory
     file_exists = check_file(directory)
     # check to see the origin file location variable exists
     location_exists = os.path.exists(origin_location)
