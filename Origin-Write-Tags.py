@@ -18,7 +18,7 @@ import datetime  # Imports functionality that lets you make timestamps
 import mutagen  # Imports functionality to get metadata from music files
 
 #  Set your directories here
-album_directory = "M:\Python Test Environment\Albums4"  # Which directory do you want to start with?
+album_directory = "M:\Python Test Environment\Sorted\Various Artists"  # Which directory do you want to start with?
 log_directory = "M:\Python Test Environment\Logs"  # Which directory do you want the log in?
 
 # Set whether you are using nested folders or have all albums in one directory here
@@ -36,7 +36,7 @@ album_depth = 1
 # 3 = Normal
 # BE CAREFULL you could accidentally overwrite metadata that will be hard to get back if you have it set to 3
 # The default is 1
-album_type = 2
+album_type = 1
 
 # Establishes the counters for completed albums and missing origin files
 count = 0
@@ -215,6 +215,7 @@ def get_metadata(directory, origin_location, album_name):
     global count
     global parse_error
     global origin_old
+    global bad_missing
 
     print(f"--Getting metadata for {album_name}")
     print(f"--From: {origin_location}")
@@ -248,6 +249,7 @@ def get_metadata(directory, origin_location, album_name):
                 "artist_name": data["Artist"],
                 "album_name": data["Name"],
                 "release_type": data["Release type"],
+                "edition": data["Edition"],
                 "edition_label": data["Record label"],
                 "edition_cat": data["Catalog number"],
                 "edition_year": data["Edition year"],
