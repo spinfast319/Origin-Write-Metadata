@@ -26,9 +26,20 @@ pip install mutagen
 4) Edit the script where it says _Set whether you are using nested folders_ to specify whether you are using nested folders or have all albums in one directory 
 
     A. If you have all your ablums in one music directory, ie. Music/Album then set this value to 1 (the default)  
-    B. If you have all your albums nest in a Music/Artist/Album style of pattern set this value to 2
+    B. If you have all your albums nest in a Music/Artist/Album style of pattern set this value to 2  
 
-5) Use your terminal to navigate to the directory the script is in and run the script from the command line.  When it finishes it will output how many albums have had metadata written to them.
+5) Edit the script where it says _Set whether you are retagging albums that are various artist, dj, or normal_ to specify whether you want to write data to the artist field and if so what data. ***BE CAREFULL*** you could accidentally overwrite metadata that will be hard to get back if you have it set to 3 as it could write _"Various Artists"_ over all the artist fields.  This is because origin files have metadata for albums not tracks.
+
+    - If you are tagging compilations with many different artists on them set this value to 1 (the default)
+      - This will write _"Various Artists"_ to the album artist field and leave all track artist fields unchanged   
+      - This default since it is the least risky choice.   
+    - If you are tagging mixes which have a dj or complier and have tracks with many different artists on them set this value to 2
+      - This will write the DJ or compiler's name to the album artist field and leave all track artist fields unchanged     
+    - If you are tagging normal albums where the same artist wrote all the tracks set this value to 3
+      - This will write the album artist name to the album artist field and the artist field for each track
+      - This is the most common situation but will write over anything that is already there. 
+
+6) Use your terminal to navigate to the directory the script is in and run the script from the command line.  When it finishes it will output how many albums have had metadata written to them.
 
 ```
 Origin-Write-Tags.py
