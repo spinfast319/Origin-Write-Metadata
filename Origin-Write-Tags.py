@@ -18,7 +18,7 @@ import datetime  # Imports functionality that lets you make timestamps
 import mutagen  # Imports functionality to get metadata from music files
 
 #  Set your directories here
-album_directory = "M:\Python Test Environment\Sorted\Various Artists"  # Which directory do you want to start with?
+album_directory = "M:\Python Test Environment\Albums"  # Which directory do you want to start with?
 log_directory = "M:\Python Test Environment\Logs"  # Which directory do you want the log in?
 
 # Set whether you are using nested folders or have all albums in one directory here
@@ -272,7 +272,7 @@ def get_metadata(directory, origin_location, album_name):
             log_message = "origin file out of date"
             log_list = None
             log_outcomes(directory, log_name, log_message, log_list)
-            origin_old += 1  # variable will increment every loop iteration'''
+            origin_old += 1  # variable will increment every loop iteration
     else:
         # log the missing origin file folders that are not likely supposed to be missing
         print("--An origin file is missing from a folder that should have one.")
