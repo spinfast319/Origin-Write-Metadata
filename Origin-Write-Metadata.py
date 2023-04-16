@@ -1,4 +1,4 @@
-# Origin Write Tags
+# Origin Write Metadata
 # author: hypermodified
 # This python script loops through a directory opens the associated origin file, gets the meta data from that and writes it to the vorbis tags in the flac files in the directory
 # This script writes to Album Artist, Album, Year, Label, Catalog Number for all albums.
