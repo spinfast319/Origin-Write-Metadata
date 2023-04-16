@@ -42,10 +42,10 @@ pip install mutagen
 6) Use your terminal to navigate to the directory the script is in and run the script from the command line.  When it finishes it will output how many albums have had metadata written to them.
 
 ```
-Origin-Write-Tags.py
+Origin-Write-Metadata.py
 ```
 
-_note: on linux and mac you will likely need to type "python3 Origin-Write-Tags.py"_  
+_note: on linux and mac you will likely need to type "python3 Origin-Write-Metadata.py"_  
 _note 2: you can run the script from anywhere if you provide the full path to it_
 
 The script will also create logs listing any album that it has problems processing.  
