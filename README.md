@@ -1,4 +1,4 @@
-# Origin-Write-Tags
+# Origin-Write-Metadata
 ### A python script that loops through a directory, opens the associated origin file, gets the metadata from that and writes it to the vorbis tags for all flac files in the directory. This script writes to Album Artist, Album, Year, Label, Catalog Number for all albums.
 
 It will write to Artist as well if you specify that the albums are not Various Artists, DJ or Classical albums.
