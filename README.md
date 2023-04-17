@@ -5,8 +5,8 @@ If you source your music from a site that has good metadata and you can access a
 
 This script will loop through your music directory and open each origin file that it finds. It then extracts the relevent metadata and writes it to the vorbis comments for all the flac files in the album. The source data of the origin files does not have individual track information, it only has album information. The mapping it does from the origin file data model to the flac vorbis comments model is:
 - The origin files _Name:_ field gets written to the vorbis _ALBUM_ field. (ie. the albums name)
-- The origin files _Release type:_ field gets written to the vorbis _GROUPING_ field. (ie. album, ep, etc)
-- The origin files _Record label:_ field gets written to the vorbis _ORGANIZATION_ field. 
+- The origin files _Release type:_ field gets written to the vorbis _GROUPING_ and _RELEASETYPE_ fields. (ie. album, ep, etc)
+- The origin files _Record label:_ field gets written to the vorbis _ORGANIZATION_ and _LABEL_ fields. 
 - The origin files _Catalog number:_ field gets written to the vorbis _LABELNO_ and _CATALOGNUMBER_ fields.
 - The origin files _Media:_ field gets written to the vorbis _MEDIA_ field. (ie. cd, web, vinyl, etc)
 - The origin files _Original year:_ field gets written to the vorbis _ORIGINALDATE_ and _YEAR_ fields.
