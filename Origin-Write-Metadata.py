@@ -317,6 +317,7 @@ def write_tags(directory, origin_metadata, album_name):
                     tag_metadata["RELEASETYPE"] = origin_metadata["release_type"]
                 if origin_metadata["edition_label"] != None:
                     tag_metadata["ORGANIZATION"] = origin_metadata["edition_label"]
+                    tag_metadata["LABEL"] = origin_metadata["edition_label"]
                 if origin_metadata["edition_cat"] != None:
                     tag_metadata["LABELNO"] = origin_metadata["edition_cat"]
                     tag_metadata["CATALOGNUMBER"] = origin_metadata["edition_cat"]
