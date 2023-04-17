@@ -38,7 +38,7 @@ This project has a dependency on the gazelle-origin project created by x1ppy. ga
 
 All your albums will need origin files origin files associated with them already for this script to work.
 
-It also has a dependcy on the python Mutagen project which is a library for manipulating music metadata. Instructions on installing it are below.
+It also has a dependency on the python project Mutagen, which is a library for manipulating music metadata. Instructions on installing it are below.
 
 ## Install and set up
 1) Clone this script where you want to run it.
