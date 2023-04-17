@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Origin Write Metadata
 # author: hypermodified
 # This python script loops through a directory opens the associated origin file, gets the meta data from that and writes it to the vorbis tags in the flac files in the directory
@@ -312,6 +314,7 @@ def write_tags(directory, origin_metadata, album_name):
                     tag_metadata["ALBUM"] = origin_metadata["album_name"]
                 if origin_metadata["release_type"] != None:
                     tag_metadata["GROUPING"] = origin_metadata["release_type"]
+                    tag_metadata["RELEASETYPE"] = origin_metadata["release_type"]
                 if origin_metadata["edition_label"] != None:
                     tag_metadata["ORGANIZATION"] = origin_metadata["edition_label"]
                 if origin_metadata["edition_cat"] != None:
