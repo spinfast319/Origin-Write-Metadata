@@ -9,7 +9,7 @@ This script will loop through your music directory and open each origin file tha
 - The origin files _Record label:_ field gets written to the vorbis _ORGANIZATION_ and _LABEL_ fields. 
 - The origin files _Catalog number:_ field gets written to the vorbis _LABELNO_ and _CATALOGNUMBER_ fields.
 - The origin files _Media:_ field gets written to the vorbis _MEDIA_ field. (ie. cd, web, vinyl, etc)
-- The origin files _Original year:_ field gets written to the vorbis _ORIGINALDATE_ and _YEAR_ fields.
+- The origin files _Original year:_ field gets written to the vorbis _ORIGINALDATE_, _ORIGINALYEAR_, and _YEAR_ fields.
 - The origin files _Edition year:_ field gets written to the vorbis _DATE_ field.
 
 The script will also use the _Artist_ field as well but will do different things if you specify that the albums are Various Artists, DJ or Classical albums. 

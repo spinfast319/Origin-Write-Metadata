@@ -20,8 +20,8 @@ import datetime  # Imports functionality that lets you make timestamps
 import mutagen  # Imports functionality to get metadata from music files
 
 #  Set your directories here
-album_directory = "M:\Python Test Environment\Albums"  # Which directory do you want to start with?
-log_directory = "M:\Python Test Environment\Logs"  # Which directory do you want the log in?
+album_directory = "M:\PROCESS"  # Which directory do you want to start with?
+log_directory = "M:\PROCESS-LOGS\Logs"  # Which directory do you want the log in?
 
 # Set whether you are using nested folders or have all albums in one directory here
 # If you have all your ablums in one music directory Music/Album_name then set this value to 1
@@ -325,6 +325,7 @@ def write_tags(directory, origin_metadata, album_name):
                     tag_metadata["MEDIA"] = str(origin_metadata["media"])
                 if origin_metadata["original_year"] != None:
                     tag_metadata["ORIGINALDATE"] = str(origin_metadata["original_year"])
+                    tag_metadata["ORIGINALYEAR"] = str(origin_metadata["original_year"])
                     tag_metadata["YEAR"] = str(origin_metadata["original_year"])
                 if origin_metadata["edition_year"] != None:
                     tag_metadata["DATE"] = str(origin_metadata["edition_year"])
