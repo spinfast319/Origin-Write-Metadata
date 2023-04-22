@@ -126,6 +126,7 @@ def level_check(directory):
     print(f"--The albums are stored {album_location_check} folders deep.")
 
     path_segments = directory.split(os.sep)
+    folder_name = path_segments[-1]
     directory_location = len(path_segments)
 
     print(f"--This folder is {directory_location} folders deep.")
@@ -136,28 +137,28 @@ def level_check(directory):
         origin_location = os.path.join(directory, "origin.yaml")
         album_name = path_segments[-1]
         total_count += 1  # variable will increment every loop iteration
-        return origin_location, album_name
+        return origin_location, album_name, folder_name
     elif album_location_check == directory_location and album_depth == 2:
         print("--This is an album.")
         origin_location = os.path.join(directory, "origin.yaml")
         album_name = os.path.join(path_segments[-2], path_segments[-1])
         total_count += 1  # variable will increment every loop iteration
-        return origin_location, album_name
+        return origin_location, album_name, folder_name
     elif album_location_check < directory_location and album_depth == 1:
         print("--This is a sub-directory")
         origin_location = os.path.join(album_directory, path_segments[-2], "origin.yaml")
         album_name = os.path.join(path_segments[-2], path_segments[-1])
-        return origin_location, album_name
+        return origin_location, album_name, folder_name
     elif album_location_check < directory_location and album_depth == 2:
         print("--This is a sub-directory")
         origin_location = os.path.join(album_directory, path_segments[-3], path_segments[-2], "origin.yaml")
         album_name = os.path.join(path_segments[-3], path_segments[-2], path_segments[-1])
-        return origin_location, album_name
+        return origin_location, album_name, folder_name
     elif album_location_check > directory_location and album_depth == 2:
         print("--This is an artist folder.")
         origin_location = None
         album_name = None
-        return origin_location, album_name
+        return origin_location, album_name, folder_name
 
 
 # Rethink this so it checks all files and if any end in flac go forth
@@ -349,6 +350,40 @@ def write_tags(directory, origin_metadata, album_name):
     log_outcomes(directory, log_name, log_message, log_list)
 
 
+#  This function adds the disc number tag based off of the number of the folder for multidisc albums using the format CD1, CD2, etc
+def add_disc_number(directory, folder_name, album_name):
+    print("Adding Disc Number")
+
+    # Clear the list so the log captures just this albums tracks
+    adddisc_list = []
+
+    path_segments = folder_name.split()
+    disc = path_segments[0]
+    disc_number = disc[2:]
+    print(f"--The disc number is: {disc_number}")
+    if disc_number != None:
+        for fname in os.listdir(directory):
+            if fname.endswith(".flac"):
+                tag_metadata = mutagen.File(fname)
+                print(f"--Track Name: {fname}")
+                # log track that was retagged
+                adddisc_list.append(f"--Track Name: {fname}")
+                tag_metadata["DISCNUMBER"] = disc_number
+                tag_metadata.save()
+
+    # figure out how many tracks were given disc numbers
+    tracks_retagged = len(adddisc_list)
+    if tracks_retagged != 0:
+        print(f"--Tracks Retagged: {tracks_retagged}")
+    else:
+        print(f"--There were no flac in this folder.")
+    # log the album the name change
+    log_name = "files_retagged"
+    log_message = f"had {tracks_retagged} files retagged with disc number"
+    log_list = adddisc_list
+    log_outcomes(directory, log_name, log_message, log_list)
+
+
 # The main function that controls the flow of the script
 def main():
 
@@ -368,13 +403,18 @@ def main():
             print("")
             print("Retagging starting.")
             # establish directory level
-            origin_location, album_name = level_check(i)
+            origin_location, album_name, folder_name = level_check(i)
+            print(f"Album Name: {album_name}")
+            print(f"Folder Name: {folder_name}")
             # check for flac
             is_flac = flac_check(i)
             # check for meta data and sort
             if is_flac == True:
-                origin_metadata = get_metadata(i, origin_location, album_name)
-                write_tags(i, origin_metadata, album_name)
+                origin_metadata = get_metadata(i, origin_location, album_name)  # get metadata
+                write_tags(i, origin_metadata, album_name)  # write metadata to flac
+                if folder_name.startswith("CD"):
+                    add_disc_number(i, folder_name, album_name)  # write disc number to flac
+                    # copy_cover_art(i, origin_location, album_name) # copy cover art to CD folders
                 print("Retagging complete.")
             else:
                 print("No retagging.")
