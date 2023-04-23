@@ -5,6 +5,8 @@
 # This python script loops through a directory opens the associated origin file, gets the meta data from that and writes it to the vorbis tags in the flac files in the directory
 # This script writes to Album Artist, Album, Year, Label, Catalog Number for all albums.
 # It will write to Artist as well if you specify that the albums are not Various Artists, DJ or Classical albums.
+# If the folder it is checking starts with CD it will use the number of the folder to write to disc number.
+# Additionally it will check folders that start with CD for cover art and if it is missing will copy it from the album folder.
 # This has only been tested to work with flac files.
 # It can handle albums with artwork folders or multiple disc folders in them. It can also handle specials characters.
 # It has been tested and works in both Ubuntu Linux and Windows 10.
@@ -38,7 +40,7 @@ album_depth = 1
 # 3 = Normal
 # BE CAREFULL you could accidentally overwrite metadata that will be hard to get back if you have it set to 3
 # The default is 1
-album_type = 1
+album_type = 3
 
 # Establishes the counters for completed albums and missing origin files
 count = 0
@@ -48,6 +50,9 @@ good_missing = 0
 bad_missing = 0
 parse_error = 0
 origin_old = 0
+copy_cover = 0
+disc_number_count = 0
+missing_cover = 0
 
 # identifies album directory level
 path_segments = album_directory.split(os.sep)
@@ -96,9 +101,16 @@ def summary_text():
     global bad_missing
     global good_missing
     global origin_old
+    global disc_number_count
+    global copy_cover
+    global missing_cover
 
     print("")
     print(f"This script wrote tags to {count} tracks from {total_count} albums.")
+    if disc_number_count != 0:
+        print(f"It added disc numbers to {disc_number_count} sub folders.")
+    if copy_cover != 0:
+        print(f"It copied cover art to {copy_cover} sub folders.")
     print("This script looks for potential missing files or errors. The following messages outline whether any were found.")
 
     error_status = error_exists(parse_error)
@@ -109,6 +121,9 @@ def summary_text():
     print(f"--{error_status}: There were {bad_missing} folders missing an origin files that should have had them.")
     error_status = error_exists(good_missing)
     print(f"--Info: Some folders didn't have origin files and probably shouldn't have origin files. {good_missing} of these folders were identified.")
+    if missing_cover != 0:
+        error_status = error_exists(missing_cover)
+        print(f"--{error_status}: There were {missing_cover} folders missing cover art that should have had them.")
 
     if error_message >= 1:
         print("Check the logs to see which folders had errors and what they were and which tracks had metadata written to them.")
@@ -343,7 +358,7 @@ def write_tags(directory, origin_metadata, album_name):
         print(f"--Tracks Retagged: {tracks_retagged}")
     else:
         print(f"--There were no flac in this folder.")
-    # log the album the name change
+    # log the files that were retagged with metadata
     log_name = "files_retagged"
     log_message = f"had {tracks_retagged} files retagged"
     log_list = retag_list
@@ -352,6 +367,8 @@ def write_tags(directory, origin_metadata, album_name):
 
 #  This function adds the disc number tag based off of the number of the folder for multidisc albums using the format CD1, CD2, etc
 def add_disc_number(directory, folder_name, album_name):
+    global disc_number_count
+
     print("Adding Disc Number")
 
     # Clear the list so the log captures just this albums tracks
@@ -375,13 +392,84 @@ def add_disc_number(directory, folder_name, album_name):
     tracks_retagged = len(adddisc_list)
     if tracks_retagged != 0:
         print(f"--Tracks Retagged: {tracks_retagged}")
+        disc_number_count += 1  # variable will increment every loop iteration
     else:
         print(f"--There were no flac in this folder.")
-    # log the album the name change
+    # log the files that were retagged with disc numbers
     log_name = "files_retagged"
     log_message = f"had {tracks_retagged} files retagged with disc number"
     log_list = adddisc_list
     log_outcomes(directory, log_name, log_message, log_list)
+
+
+# Finds the path of an image with the name 'cover' and an extension of .jpg, .jpeg, .gif, or .png in the given directory.
+def check_cover(directory):
+
+    # Check if directory exists
+    if not os.path.isdir(directory):
+        return None
+
+    # Look for files with the name 'cover' and an appropriate extension
+    for filename in os.listdir(directory):
+        name, ext = os.path.splitext(filename)
+        if name.lower() == "cover" and ext.lower() in (".jpg", ".jpeg", ".gif", ".png"):
+            return os.path.join(directory, filename)
+
+    # If no appropriate file is found, return None
+    return None
+
+
+#  This function adds the disc number tag based off of the number of the folder for multidisc albums using the format CD1, CD2, etc
+#  This function prioritises cover.jpg over any other cover files in the folders
+def copy_cover_art(directory, album_name):
+    global copy_cover
+    global missing_cover
+
+    # Check to see if cover art exists in the sub directory
+    sub_folder_cover = check_cover(directory)
+
+    # If no cover is present copy the cover art from the folder above to the folder
+    if sub_folder_cover == None:
+        print("--This subfolder is missing a cover.")
+
+        # Get the path of the source cover art file in the album folder.
+        directory_above = os.path.dirname(directory)
+        # Try cover.jpg first, if it doesn't exist get the cover art path
+        guess_cover = os.path.join(directory_above, "cover.jpg")
+        if os.path.exists(guess_cover):
+            source_cover_path = guess_cover
+        else:
+            source_cover_path = check_cover(directory_above)
+
+        # If cover art exists in the album folder copy it to the subfolder
+        if source_cover_path:
+            #  Build destination directory
+            name, ext = os.path.splitext(source_cover_path)
+            if ext.lower() == ".jpeg":
+                ext = ".jpg"
+            destination_cover_art = directory + os.sep + "cover" + ext.lower()
+
+            # Copy cover art
+            print("--Copying album cover art to subfolder.")
+            shutil.copy(source_cover_path, destination_cover_art)
+            print(f"----Source: {source_cover_path}")
+            print(f"----Destination: {destination_cover_art}")
+            copy_cover += 1  # variable will increment every loop iteration
+            # log the sub folders that had cover art copied to them
+            log_name = "files_retagged"
+            log_message = f"had cover art copied to it"
+            log_list = None
+            log_outcomes(directory, log_name, log_message, log_list)
+        else:
+            print("--The cover art is missing from the album folder.")
+            missing_cover += 1  # variable will increment every loop iteration
+            # log missing cover art
+            log_name = "missing_cover_art"
+            log_message = f"was missing cover art"
+            log_list = None
+            log_outcomes(directory, log_name, log_message, log_list)
+    else:
+        print("--There is a cover in this subfolder.")
 
 
 # The main function that controls the flow of the script
@@ -404,8 +492,6 @@ def main():
             print("Retagging starting.")
             # establish directory level
             origin_location, album_name, folder_name = level_check(i)
-            print(f"Album Name: {album_name}")
-            print(f"Folder Name: {folder_name}")
             # check for flac
             is_flac = flac_check(i)
             # check for meta data and sort
@@ -414,7 +500,7 @@ def main():
                 write_tags(i, origin_metadata, album_name)  # write metadata to flac
                 if folder_name.startswith("CD"):
                     add_disc_number(i, folder_name, album_name)  # write disc number to flac
-                    # copy_cover_art(i, origin_location, album_name) # copy cover art to CD folders
+                    copy_cover_art(i, album_name)  # copy cover art to CD folders if missing
                 print("Retagging complete.")
             else:
                 print("No retagging.")
