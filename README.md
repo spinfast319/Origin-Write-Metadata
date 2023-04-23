@@ -25,6 +25,8 @@ For DJ mixes the script maps:
 
 It doesn't yet have functionality to work for classical albums with composers and conductors but this will like be added in the future.
 
+Additionally, the script can write to the vorbis _DISCNUMBER_ field.  It is designed to be run after the [Standard-Folder](https://github.com/spinfast319/Standard-Folder) script which will name all sub-directories with flac in them to the format of _CD1_, _CD2_, etc. If this script encounters sub-directories with that naming structure it will write the number that follows the letters CD to the vorbis _DISCNUMBER_ field.  After it does that, it checks to see if the sub-directory has a cover art image in it.  If the cover art is missing, it copies the cover art from the album directory to the sub-directory. It logs all the retagging and copying it does and will also log missing cover art.
+
 This script does not write the _Tags_ to the _GENRE_ field. There is a seperate set of scripts that deal with genres and styles. [Origin-Combine-Genres](https://github.com/spinfast319/Origin-Combine-Genres) merges the _GENRE_, _MOOD_ and _STYLE_ comments from the flac with the _Tags_ field and [Origin-Write-Genres](https://github.com/spinfast319/Origin-Write-Genres) determines which ones should be genres and which ones should be styles and writes them to the correct vorbis comments.
 
 Once the metadata from the origin files is properly written to the flac files you will likely need to configure your music player to see and use non normative metadata.  Full featured music application like MusicBee and Foobar2000 will be able to do this.
