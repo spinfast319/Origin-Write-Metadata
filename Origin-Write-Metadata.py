@@ -321,10 +321,13 @@ def write_tags(directory, origin_metadata, album_name):
                 #  retag the metadata
                 if origin_metadata["artist_name"] != None and album_type == 1:
                     tag_metadata["ALBUM ARTIST"] = origin_metadata["artist_name"]
+                    tag_metadata["ALBUMARTIST"] = origin_metadata["artist_name"]
                 if origin_metadata["djs"] != None and album_type == 2:
                     tag_metadata["ALBUM ARTIST"] = origin_metadata["djs"]
+                    tag_metadata["ALBUMARTIST"] = origin_metadata["djs"]
                 if origin_metadata["artist_name"] != None and album_type == 3:
                     tag_metadata["ALBUM ARTIST"] = origin_metadata["artist_name"]
+                    tag_metadata["ALBUMARTIST"] = origin_metadata["artist_name"]
                     tag_metadata["ARTIST"] = origin_metadata["artist_name"]
                 if origin_metadata["album_name"] != None:
                     tag_metadata["ALBUM"] = origin_metadata["album_name"]
