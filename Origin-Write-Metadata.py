@@ -313,7 +313,7 @@ def write_tags(directory, origin_metadata, album_name):
     if origin_metadata != None:
         # Loop through the directory and rename flac files
         for fname in os.listdir(directory):
-            if fname.endswith(".flac"):
+            if fname.lower().endswith(".flac"):
                 tag_metadata = mutagen.File(fname)
                 print(f"--Track Name: {fname}")
                 # log track that was retagged
@@ -383,7 +383,7 @@ def add_disc_number(directory, folder_name, album_name):
     print(f"--The disc number is: {disc_number}")
     if disc_number != None:
         for fname in os.listdir(directory):
-            if fname.endswith(".flac"):
+            if fname.lower().endswith(".flac"):
                 tag_metadata = mutagen.File(fname)
                 print(f"--Track Name: {fname}")
                 # log track that was retagged
